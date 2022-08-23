@@ -85,7 +85,7 @@ const ToDo = () => {
 
   return (
     <>
-      <header>
+      <header data-testid='header'>
         <h1>To Do List: {incomplete} items pending</h1>
       </header>
 
@@ -95,7 +95,7 @@ const ToDo = () => {
 
         <label>
           <span>To Do Item</span>
-          <input onChange={handleChange} name="text" type="text" placeholder="Item Details" />
+          <input data-testid='input' onChange={handleChange} name="text" type="text" placeholder="Item Details" />
         </label>
 
         <label>
@@ -109,7 +109,7 @@ const ToDo = () => {
         </label>
 
         <label>
-          <button type="submit">Add Item</button>
+          <button data-testid='button' type="submit">Add Item</button>
         </label>
       </form>
       <button className='show' onClick={handleShow}>{!showComplete ? 'Show Completed Items' : 'Hide Completed Items'}</button>
