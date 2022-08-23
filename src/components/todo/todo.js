@@ -3,11 +3,14 @@ import useForm from '../../hooks/form.js';
 
 import { v4 as uuid } from 'uuid';
 import { useSettingsContext } from '../context/Settings'
+import Pagination from "../Pagination/Pagination";
 import './todo.scss';
 
 const ToDo = () => {
 
-  const { numberOfItems, setNumberOfItems, showComplete, setShowComplete } = useSettingsContext();
+  const { currentPage,
+    setCurrentPage,
+    postsPerPage, showComplete, setShowComplete } = useSettingsContext();
   const [defaultValues] = useState({
     difficulty: 3,
   });
@@ -66,6 +69,14 @@ const ToDo = () => {
     setShowComplete(!showComplete)
   }
 
+  // Get current posts
+  const indexOfLastPost = currentPage * postsPerPage;
+  const indexOfFirstPost = indexOfLastPost - postsPerPage;
+  const currentPosts = list.slice(indexOfFirstPost, indexOfLastPost);
+
+  // Change page
+  const paginate = pageNumber => setCurrentPage(pageNumber);
+
   useEffect(() => {
     let incompleteCount = list.filter(item => !item.complete).length;
     setIncomplete(incompleteCount);
@@ -80,7 +91,7 @@ const ToDo = () => {
 
       <form onSubmit={handleSubmit}>
 
-        <h2>Add To Do Item</h2>
+        <h2 className='text-head'>Add To Do Item</h2>
 
         <label>
           <span>To Do Item</span>
@@ -104,7 +115,7 @@ const ToDo = () => {
       <button className='show' onClick={handleShow}>{!showComplete ? 'Show Completed Items' : 'Hide Completed Items'}</button>
       {
         !showComplete ?
-          list.map(item => {
+          currentPosts.map(item => {
             return (
               <div className='list-continuer'>
                 {
@@ -112,16 +123,20 @@ const ToDo = () => {
                     <div className='btn-list'>
                       <button onClick={() => deleteItem(item.id)}>x</button>
                     </div>
-                    <p>{item.text}</p>
-                    <p><small>Assigned to: {item.assignee}</small></p>
-                    <p><small>Difficulty: {item.difficulty}</small></p>
+                    <p className='p-text'>
+                      {item.text}
+                      <div className='p-holder'>
+                        <p className='p-assigned'><small>Assigned to: {item.assignee}</small></p>
+                        <p className='p-difficulty'><small>Difficulty: {item.difficulty}</small></p>
+                      </div>
+                    </p>
                     <div className='checkbox'>
                       <input type="checkbox" onClick={() => toggleComplete(item.id)} />
                       <label htmlFor="item">Complete</label>
                     </div>
                     <hr />
                   </div>
-                    : null
+                    : <p className='p-complete'>Task Completed...</p>
                 }
               </div>
             )
@@ -132,11 +147,15 @@ const ToDo = () => {
                 return (
                   <div key={item.id} className='items-complete'>
                     <div className='btn-list-complete'>
-                    <button onClick={() => deleteListItem(item.id)}>x</button>
+                      <button onClick={() => deleteListItem(item.id)}>x</button>
                     </div>
-                    <p>{item.text}</p>
-                    <p><small>Assigned to: {item.assignee}</small></p>
-                    <p><small>Difficulty: {item.difficulty}</small></p>
+                    <p className='p-text-complete'>
+                      {item.text}
+                      <div className='p-holder-complete'>
+                        <p className='p-assigned-complete'><small>Assigned to: {item.assignee}</small></p>
+                        <p className='p-difficulty-complete'><small>Difficulty: {item.difficulty}</small></p>
+                      </div>
+                    </p>
                     <div className='checkbox-complete'>
                       <label htmlFor="item" onClick={() => toggleCompleteList(item.id)}>Completed</label>
                     </div>
@@ -144,11 +163,15 @@ const ToDo = () => {
                   </div>
                 )
               })
-                : null
+                : 'No Task Completed...'
             }
           </div>
-
       }
+      <div className='page'>
+        <Pagination postsPerPage={postsPerPage}
+          totalPosts={list.length}
+          paginate={paginate} />
+      </div>
     </>
   );
 };

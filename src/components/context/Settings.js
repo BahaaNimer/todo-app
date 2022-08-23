@@ -3,12 +3,14 @@ import React, { createContext, useContext, useState } from "react";
 const SettingsContext = createContext();
 
 const SettingsContextProvider = ({ children }) => {
-  const [numberOfItems, setNumberOfItems] = useState(5);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [postsPerPage] = useState(3);
   const [showComplete, setShowComplete] = useState(false);
 
   const todoContext = {
-    numberOfItems,
-    setNumberOfItems,
+    currentPage,
+    setCurrentPage,
+    postsPerPage,
     showComplete,
     setShowComplete,
   };
