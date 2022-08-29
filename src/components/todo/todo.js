@@ -6,25 +6,25 @@ import { useSettingsContext } from '../context/Settings'
 import Pagination from "../Pagination/Pagination";
 import './todo.scss';
 
-const ToDo = () => {
+const LOCAL_STORAGE_KEY = 'localStorage';
 
-  const { currentPage,
-    setCurrentPage,
-    postsPerPage, showComplete, setShowComplete } = useSettingsContext();
+const ToDo = () => {
+  const { currentPage, setCurrentPage, postsPerPage, setPostsPerPage, showComplete, setShowComplete } = useSettingsContext();
+  const [todos, setTodos] = useState([]);
   const [defaultValues] = useState({
     difficulty: 3,
   });
 
   const [list, setList] = useState([]);
   const [incomplete, setIncomplete] = useState([]);
-  const [listOfCompleted, setListOfCompleted] = useState([]);
+  const [listOfUncompleted, setListOfUncompleted] = useState([]);
   const { handleChange, handleSubmit } = useForm(addItem, defaultValues);
 
   function addItem(item) {
     item.id = uuid();
     item.complete = false;
-    console.log(item);
     setList([...list, item]);
+    setTodos([...todos, item]);
   }
 
   function deleteItem(id) {
@@ -33,56 +33,99 @@ const ToDo = () => {
   }
 
   function deleteListItem(id) {
-    const items = listOfCompleted.filter(item => item.id !== id);
-    setListOfCompleted(items);
+    const items = listOfUncompleted.filter(item => item.id !== id);
+    setListOfUncompleted(items);
   }
 
   function toggleComplete(id) {
-    const items = list.map(item => {
-      if (item.id === id) {
-        item.complete = !item.complete;
-      }
-      if (item.complete === true) {
-        setListOfCompleted([...listOfCompleted, item])
-        console.log('list Of Completed :>> ', listOfCompleted);
-      }
-      return item;
-    });
-
-    setList(items);
-  }
-  function toggleCompleteList(id) {
-    const items = listOfCompleted.map(item => {
+    const items = todos.map(item => {
       if (item.id === id) {
         item.complete = !item.complete;
       }
       if (item.complete === false) {
-        item = listOfCompleted.filter(item => item.id !== id)
+        setListOfUncompleted([...listOfUncompleted, item])
       }
       return item;
     });
-
-    setListOfCompleted(items);
+    setTodos(items);
+    setList(items);
+  }
+  function toggleUncompletedList(id) {
+    const items = listOfUncompleted.map(item => {
+      if (item.id === id) {
+        item.complete = !item.complete;
+      }
+      if (item.complete === true) {
+        listOfUncompleted.filter(item => item.id !== id)
+      }
+      return item;
+    });
+    setTodos(items);
+    setListOfUncompleted(items);
   }
 
   const handleShow = () => {
     setShowComplete(!showComplete)
   }
 
+  useEffect(() => {
+    const storageTodos = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY));
+    if (storageTodos) {
+      if (storageTodos.length > 0) {
+        setTodos(storageTodos);
+      }
+    }
+    const storageShow = JSON.parse(localStorage.getItem('status'));
+    if (storageShow) {
+      if (storageShow.length > 0) {
+        setShowComplete(storageShow);
+      }
+    }
+    const storageNumber = JSON.parse(localStorage.getItem('number'));
+    if (storageNumber) {
+      if (storageNumber.length > 0) {
+        setPostsPerPage(storageNumber);
+      }
+    }
+    const storageIncomplete = JSON.parse(localStorage.getItem('incomplete'));
+    if (storageIncomplete) {
+      if (storageIncomplete.length > 0) {
+        setListOfUncompleted(storageIncomplete);
+      }
+    }
+    // eslint-disable-next-line
+  }, []);
+
+  useEffect(() => {
+    // fires when todos array gets updated
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(todos));
+    localStorage.setItem('status', JSON.stringify(showComplete));
+    localStorage.setItem('number', JSON.stringify(postsPerPage));
+    localStorage.setItem('incomplete', JSON.stringify(listOfUncompleted));
+  }, [todos, showComplete, postsPerPage, listOfUncompleted]);
+
   // Get current posts
   const indexOfLastPost = currentPage * postsPerPage;
   const indexOfFirstPost = indexOfLastPost - postsPerPage;
-  const currentPosts = list.slice(indexOfFirstPost, indexOfLastPost);
+  const currentPosts = todos.slice(indexOfFirstPost, indexOfLastPost);
+  const currentUncompletedPosts = listOfUncompleted.slice(indexOfFirstPost, indexOfLastPost);
 
   // Change page
   const paginate = pageNumber => setCurrentPage(pageNumber);
 
   useEffect(() => {
-    let incompleteCount = list.filter(item => !item.complete).length;
+    let incompleteCount = todos.filter(item => !item.complete).length;
     setIncomplete(incompleteCount);
     document.title = `To Do List: ${incomplete}`;
-  }, [list, incomplete]);
+  }, [todos, incomplete]);
 
+  useEffect(() => {
+    if (todos.complete === false) {
+      setListOfUncompleted([...listOfUncompleted, todos.complete]);
+    }
+  }, [todos, listOfUncompleted]);
+
+  console.log('todos :>> ', todos);
   return (
     <>
       <header data-testid='header'>
@@ -111,65 +154,74 @@ const ToDo = () => {
         <label>
           <button data-testid='button' type="submit">Add Item</button>
         </label>
+
+        <input type="number" className='per-page' name="postsPerPage" placeholder='Number of posts per page' onChange={(e) => { setPostsPerPage(parseInt(e.target.value)) }} />
       </form>
-      <button className='show' onClick={handleShow}>{!showComplete ? 'Show Completed Items' : 'Hide Completed Items'}</button>
+      <button className='show' onClick={handleShow}>{showComplete ? 'Hide Completed Items' : 'Show Completed Items'}</button>
       {
-        !showComplete ?
-          currentPosts.map(item => {
+        showComplete ?
+          currentPosts.map((item, index) => {
             return (
-              <div className='list-continuer'>
-                {
-                  !item.complete ? <div key={item.id} className='items'>
-                    <div className='btn-list'>
-                      <button onClick={() => deleteItem(item.id)}>x</button>
-                    </div>
-                    <p className='p-text'>
-                      {item.text}
-                      <div className='p-holder'>
-                        <p className='p-assigned'><small>Assigned to: {item.assignee}</small></p>
-                        <p className='p-difficulty'><small>Difficulty: {item.difficulty}</small></p>
-                      </div>
-                    </p>
-                    <div className='checkbox'>
-                      <input type="checkbox" onClick={() => toggleComplete(item.id)} />
-                      <label htmlFor="item">Complete</label>
-                    </div>
-                    <hr />
+              <div className='list-continuer' key={index}>
+                <div key={item.id} className='items'>
+                  <div className='btn-list'>
+                    <button onClick={() => deleteItem(item.id)}>x</button>
                   </div>
-                    : <p className='p-complete'>Task Completed...</p>
-                }
+                  <p className='p-text'>
+                    {item.text}
+                  </p>
+                  <div className='p-holder'>
+                    <span className='p-assigned'><small>Assigned to: {item.assignee}</small></span>
+                    <span className='p-difficulty'><small>Difficulty: {item.difficulty}</small></span>
+                  </div>
+                  <div className='checkbox'>
+                    {
+                      item.complete ? <div>
+                        <input type="checkbox" name='completed' onClick={() => toggleComplete(item.id)} defaultChecked={true} />
+                        <label htmlFor="completed">Completed</label>
+                      </div>
+                        : <div>
+                          <input type="checkbox" name="Incomplete-item" onClick={() => toggleComplete(item.id)} />
+                          <label htmlFor="Incomplete-item">Complete</label>
+                        </div>
+                    }
+                  </div>
+                  <hr />
+                </div>
               </div>
             )
           })
-          : <div>
-            {
-              !listOfCompleted.complete ? listOfCompleted.map(item => {
-                return (
-                  <div key={item.id} className='items-complete'>
-                    <div className='btn-list-complete'>
-                      <button onClick={() => deleteListItem(item.id)}>x</button>
-                    </div>
-                    <p className='p-text-complete'>
-                      {item.text}
-                      <div className='p-holder-complete'>
-                        <p className='p-assigned-complete'><small>Assigned to: {item.assignee}</small></p>
-                        <p className='p-difficulty-complete'><small>Difficulty: {item.difficulty}</small></p>
-                      </div>
-                    </p>
-                    <div className='checkbox-complete'>
-                      <label htmlFor="item" onClick={() => toggleCompleteList(item.id)}>Completed</label>
-                    </div>
-                    <hr />
+          : currentUncompletedPosts.map((item, index) => {
+            return (
+              <div className='list-continuer' key={index}>
+                <div key={item.id} className='items'>
+                  <div className='btn-list'>
+                    <button onClick={() => deleteListItem(item.id)}>x</button>
                   </div>
-                )
-              })
-                : 'No Task Completed...'
-            }
-          </div>
+                  <p className='p-text'>
+                    {item.text}
+                  </p>
+                  <div className='p-holder'>
+                    <span className='p-assigned'><small>Assigned to: {item.assignee}</small></span>
+                    <span className='p-difficulty'><small>Difficulty: {item.difficulty}</small></span>
+                  </div>
+                  <div className='checkbox'>
+                    {
+                      !item.complete ? <div>
+                        <input type="checkbox" name='Incomplete' onClick={() => toggleUncompletedList(item.id)} />
+                        <label htmlFor="Incomplete">Complete</label>
+                      </div> : null
+                    }
+                  </div>
+                  <hr />
+                </div>
+              </div>
+            )
+          })
       }
       <div className='page'>
         <Pagination postsPerPage={postsPerPage}
-          totalPosts={list.length}
+          totalPosts={todos.length}
           paginate={paginate} />
       </div>
     </>

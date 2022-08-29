@@ -4,8 +4,8 @@ const SettingsContext = createContext();
 
 const SettingsContextProvider = ({ children }) => {
   const [currentPage, setCurrentPage] = useState(1);
-  const [postsPerPage] = useState(3);
-  const [showComplete, setShowComplete] = useState(false);
+  const [postsPerPage, setPostsPerPage] = useState(3);
+  const [showComplete, setShowComplete] = useState(true);
 
   const todoContext = {
     currentPage,
@@ -13,6 +13,7 @@ const SettingsContextProvider = ({ children }) => {
     postsPerPage,
     showComplete,
     setShowComplete,
+    setPostsPerPage,
   };
   return (
     <SettingsContext.Provider value={todoContext}>
