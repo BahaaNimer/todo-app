@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState } from "react";
 
-const SettingsContext = createContext();
+export const SettingsContext = createContext();
 
 const SettingsContextProvider = ({ children }) => {
   const [currentPage, setCurrentPage] = useState(1);

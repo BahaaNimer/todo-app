@@ -21,5 +21,5 @@ test('handle input change', async () => {
 test('handle click', async () => {
   const { getByTestId } = screen;
   const button = await waitFor(() => getByTestId('button'));
-  expect(button).toHaveTextContent('Add Item');
+  expect(button).toHaveTextContent('Log In');
 });

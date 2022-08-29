@@ -1,5 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useContext } from 'react';
 import useForm from '../../hooks/form.js';
+
+// import Form from '../context/Form';
+import { When } from 'react-if';
+import { LoginContext } from "../context/Login"
+import Auth from "../auth/auth"
 
 import { v4 as uuid } from 'uuid';
 import { useSettingsContext } from '../context/Settings'
@@ -10,6 +15,8 @@ const LOCAL_STORAGE_KEY = 'localStorage';
 
 const ToDo = () => {
   const { currentPage, setCurrentPage, postsPerPage, setPostsPerPage, showComplete, setShowComplete } = useSettingsContext();
+  const login = useContext(LoginContext);
+
   const [todos, setTodos] = useState([]);
   const [defaultValues] = useState({
     difficulty: 3,
@@ -19,6 +26,7 @@ const ToDo = () => {
   const [incomplete, setIncomplete] = useState([]);
   const [listOfUncompleted, setListOfUncompleted] = useState([]);
   const { handleChange, handleSubmit } = useForm(addItem, defaultValues);
+
 
   function addItem(item) {
     item.id = uuid();
@@ -125,107 +133,211 @@ const ToDo = () => {
     }
   }, [todos, listOfUncompleted]);
 
-  console.log('todos :>> ', todos);
   return (
     <>
-      <header data-testid='header'>
-        <h1>To Do List: {incomplete} items pending</h1>
-      </header>
+      <When condition={login.loggedIn}>
+        <button onClick={login.logout}>Log Out</button>
+        <Auth actions='read'>
+          <header data-testid='header'>
+            <h1>To Do List: {incomplete} items pending</h1>
+          </header>
+        </Auth>
+        <Auth actions='delete'>
+          <form onSubmit={handleSubmit}>
 
-      <form onSubmit={handleSubmit}>
+            <h2 className='text-head'>Add To Do Item</h2>
 
-        <h2 className='text-head'>Add To Do Item</h2>
+            <label>
+              <span>To Do Item</span>
+              <input data-testid='input' onChange={handleChange} name="text" type="text" placeholder="Item Details" />
+            </label>
 
-        <label>
-          <span>To Do Item</span>
-          <input data-testid='input' onChange={handleChange} name="text" type="text" placeholder="Item Details" />
-        </label>
+            <label>
+              <span>Assigned To</span>
+              <input onChange={handleChange} name="assignee" type="text" placeholder="Assignee Name" />
+            </label>
 
-        <label>
-          <span>Assigned To</span>
-          <input onChange={handleChange} name="assignee" type="text" placeholder="Assignee Name" />
-        </label>
+            <label>
+              <span>Difficulty</span>
+              <input onChange={handleChange} defaultValue={defaultValues.difficulty} type="range" min={1} max={5} name="difficulty" />
+            </label>
 
-        <label>
-          <span>Difficulty</span>
-          <input onChange={handleChange} defaultValue={defaultValues.difficulty} type="range" min={1} max={5} name="difficulty" />
-        </label>
+            <label>
+              <button data-testid='button' type="submit">Add Item</button>
+            </label>
 
-        <label>
-          <button data-testid='button' type="submit">Add Item</button>
-        </label>
-
-        <input type="number" className='per-page' name="postsPerPage" placeholder='Number of posts per page' onChange={(e) => { setPostsPerPage(parseInt(e.target.value)) }} />
-      </form>
-      <button className='show' onClick={handleShow}>{showComplete ? 'Hide Completed Items' : 'Show Completed Items'}</button>
-      {
-        showComplete ?
-          currentPosts.map((item, index) => {
-            return (
-              <div className='list-continuer' key={index}>
-                <div key={item.id} className='items'>
-                  <div className='btn-list'>
-                    <button onClick={() => deleteItem(item.id)}>x</button>
-                  </div>
-                  <p className='p-text'>
-                    {item.text}
-                  </p>
-                  <div className='p-holder'>
-                    <span className='p-assigned'><small>Assigned to: {item.assignee}</small></span>
-                    <span className='p-difficulty'><small>Difficulty: {item.difficulty}</small></span>
-                  </div>
-                  <div className='checkbox'>
-                    {
-                      item.complete ? <div>
-                        <input type="checkbox" name='completed' onClick={() => toggleComplete(item.id)} defaultChecked={true} />
-                        <label htmlFor="completed">Completed</label>
+            <input type="number" className='per-page' name="postsPerPage" placeholder='Number of posts per page' onChange={(e) => { setPostsPerPage(parseInt(e.target.value)) }} />
+          </form>
+          <button className='show' onClick={handleShow}>{showComplete ? 'Hide Completed Items' : 'Show Completed Items'}</button>
+          {
+            showComplete ?
+              currentPosts.map((item, index) => {
+                return (
+                  <div className='list-continuer' key={index}>
+                    <div key={item.id} className='items'>
+                      <div className='btn-list'>
+                        <button onClick={() => deleteItem(item.id)}>x</button>
                       </div>
-                        : <div>
-                          <input type="checkbox" name="Incomplete-item" onClick={() => toggleComplete(item.id)} />
-                          <label htmlFor="Incomplete-item">Complete</label>
-                        </div>
-                    }
+                      <p className='p-text'>
+                        {item.text}
+                      </p>
+                      <div className='p-holder'>
+                        <span className='p-assigned'><small>Assigned to: {item.assignee}</small></span>
+                        <span className='p-difficulty'><small>Difficulty: {item.difficulty}</small></span>
+                      </div>
+                      <div className='checkbox'>
+                        {
+                          item.complete ? <div>
+                            <input type="checkbox" name='completed' onClick={() => toggleComplete(item.id)} defaultChecked={true} />
+                            <label htmlFor="completed">Completed</label>
+                          </div>
+                            : <div>
+                              <input type="checkbox" name="Incomplete-item" onClick={() => toggleComplete(item.id)} />
+                              <label htmlFor="Incomplete-item">Complete</label>
+                            </div>
+                        }
+                      </div>
+                      <hr />
+                    </div>
                   </div>
-                  <hr />
-                </div>
-              </div>
-            )
-          })
-          : currentUncompletedPosts.map((item, index) => {
-            return (
-              <div className='list-continuer' key={index}>
-                <div key={item.id} className='items'>
-                  <div className='btn-list'>
-                    <button onClick={() => deleteListItem(item.id)}>x</button>
+                )
+              })
+              : currentUncompletedPosts.map((item, index) => {
+                return (
+                  <div className='list-continuer' key={index}>
+                    <div key={item.id} className='items'>
+                      <div className='btn-list'>
+                        <button onClick={() => deleteListItem(item.id)}>x</button>
+                      </div>
+                      <p className='p-text'>
+                        {item.text}
+                      </p>
+                      <div className='p-holder'>
+                        <span className='p-assigned'><small>Assigned to: {item.assignee}</small></span>
+                        <span className='p-difficulty'><small>Difficulty: {item.difficulty}</small></span>
+                      </div>
+                      <div className='checkbox'>
+                        {
+                          !item.complete ? <div>
+                            <input type="checkbox" name='Incomplete' onClick={() => toggleUncompletedList(item.id)} />
+                            <label htmlFor="Incomplete">Complete</label>
+                          </div> : null
+                        }
+                      </div>
+                      <hr />
+                    </div>
                   </div>
-                  <p className='p-text'>
-                    {item.text}
-                  </p>
-                  <div className='p-holder'>
-                    <span className='p-assigned'><small>Assigned to: {item.assignee}</small></span>
-                    <span className='p-difficulty'><small>Difficulty: {item.difficulty}</small></span>
-                  </div>
-                  <div className='checkbox'>
-                    {
-                      !item.complete ? <div>
-                        <input type="checkbox" name='Incomplete' onClick={() => toggleUncompletedList(item.id)} />
-                        <label htmlFor="Incomplete">Complete</label>
-                      </div> : null
-                    }
-                  </div>
-                  <hr />
-                </div>
-              </div>
-            )
-          })
-      }
-      <div className='page'>
-        <Pagination postsPerPage={postsPerPage}
-          totalPosts={todos.length}
-          paginate={paginate} />
-      </div>
+                )
+              })
+          }
+          <div className='page'>
+            <Pagination postsPerPage={postsPerPage}
+              totalPosts={todos.length}
+              paginate={paginate} />
+          </div>
+        </Auth>
+      </When>
     </>
   );
 };
 
 export default ToDo;
+// eslint-disable-next-line
+{/* ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ */ }
+// eslint-disable-next-line
+{/* <header data-testid='header'>
+          <h1>To Do List: {incomplete} items pending</h1>
+        </header>
+
+        <form onSubmit={handleSubmit}>
+
+          <h2 className='text-head'>Add To Do Item</h2>
+
+          <label>
+            <span>To Do Item</span>
+            <input data-testid='input' onChange={handleChange} name="text" type="text" placeholder="Item Details" />
+          </label>
+
+          <label>
+            <span>Assigned To</span>
+            <input onChange={handleChange} name="assignee" type="text" placeholder="Assignee Name" />
+          </label>
+
+          <label>
+            <span>Difficulty</span>
+            <input onChange={handleChange} defaultValue={defaultValues.difficulty} type="range" min={1} max={5} name="difficulty" />
+          </label>
+
+          <label>
+            <button data-testid='button' type="submit">Add Item</button>
+          </label>
+
+          <input type="number" className='per-page' name="postsPerPage" placeholder='Number of posts per page' onChange={(e) => { setPostsPerPage(parseInt(e.target.value)) }} />
+        </form>
+        <button className='show' onClick={handleShow}>{showComplete ? 'Hide Completed Items' : 'Show Completed Items'}</button>
+        {
+          showComplete ?
+            currentPosts.map((item, index) => {
+              return (
+                <div className='list-continuer' key={index}>
+                  <div key={item.id} className='items'>
+                    <div className='btn-list'>
+                      <button onClick={() => deleteItem(item.id)}>x</button>
+                    </div>
+                    <p className='p-text'>
+                      {item.text}
+                    </p>
+                    <div className='p-holder'>
+                      <span className='p-assigned'><small>Assigned to: {item.assignee}</small></span>
+                      <span className='p-difficulty'><small>Difficulty: {item.difficulty}</small></span>
+                    </div>
+                    <div className='checkbox'>
+                      {
+                        item.complete ? <div>
+                          <input type="checkbox" name='completed' onClick={() => toggleComplete(item.id)} defaultChecked={true} />
+                          <label htmlFor="completed">Completed</label>
+                        </div>
+                          : <div>
+                            <input type="checkbox" name="Incomplete-item" onClick={() => toggleComplete(item.id)} />
+                            <label htmlFor="Incomplete-item">Complete</label>
+                          </div>
+                      }
+                    </div>
+                    <hr />
+                  </div>
+                </div>
+              )
+            })
+            : currentUncompletedPosts.map((item, index) => {
+              return (
+                <div className='list-continuer' key={index}>
+                  <div key={item.id} className='items'>
+                    <div className='btn-list'>
+                      <button onClick={() => deleteListItem(item.id)}>x</button>
+                    </div>
+                    <p className='p-text'>
+                      {item.text}
+                    </p>
+                    <div className='p-holder'>
+                      <span className='p-assigned'><small>Assigned to: {item.assignee}</small></span>
+                      <span className='p-difficulty'><small>Difficulty: {item.difficulty}</small></span>
+                    </div>
+                    <div className='checkbox'>
+                      {
+                        !item.complete ? <div>
+                          <input type="checkbox" name='Incomplete' onClick={() => toggleUncompletedList(item.id)} />
+                          <label htmlFor="Incomplete">Complete</label>
+                        </div> : null
+                      }
+                    </div>
+                    <hr />
+                  </div>
+                </div>
+              )
+            })
+        }
+        <div className='page'>
+          <Pagination postsPerPage={postsPerPage}
+            totalPosts={todos.length}
+            paginate={paginate} />
+        </div> */}
