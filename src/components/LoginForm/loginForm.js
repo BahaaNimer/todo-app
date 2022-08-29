@@ -22,11 +22,11 @@ export default function LoginForm(props) {
   return (
     <>
       <When condition={!loginContext.loggedIn}>
-        <div className="card-form">
+        <div className="card-form" data-testid='header'>
           <form className="form-login">
             <div className="input">
               <label>Username </label>
-              <input type="text" placeholder="Enter your username" name="uname" required onChange={usernameHandler} />
+              <input data-testid='input' type="text" placeholder="Enter your username" name="uname" required onChange={usernameHandler} />
             </div>
 
             <div className="input">
@@ -35,7 +35,7 @@ export default function LoginForm(props) {
             </div>
 
             <div className="button">
-              <button type="submit" onClick={handleSubmit}>Log In</button>
+              <button data-testid='button' type="submit" onClick={handleSubmit}>Log In</button>
             </div>
           </form>
         </div>
