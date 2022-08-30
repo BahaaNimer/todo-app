@@ -10,7 +10,7 @@
   padding: 20px;
 }
 
-.form-login{
+.form-login {
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -39,5 +39,13 @@ input {
 }
 
 label {
+  width: 100%;
+}
+
+.username {
+  width: 100%;
+}
+
+.password {
   width: 100%;
 }
