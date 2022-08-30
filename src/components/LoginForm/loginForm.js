@@ -25,12 +25,12 @@ export default function LoginForm(props) {
         <div className="card-form" data-testid='header'>
           <form className="form-login">
             <div className="input">
-              <label>Username </label>
+              <label className="username">Username </label>
               <input data-testid='input' type="text" placeholder="Enter your username" name="uname" required onChange={usernameHandler} />
             </div>
 
             <div className="input">
-              <label>Password </label>
+              <label className="password">Password </label>
               <input type="password" placeholder="Enter your password" name="pass" required onChange={passwordHandler} />
             </div>
 

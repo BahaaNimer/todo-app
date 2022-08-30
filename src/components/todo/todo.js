@@ -33,11 +33,12 @@ const ToDo = () => {
     item.complete = false;
     setList([...list, item]);
     setTodos([...todos, item]);
+    setListOfUncompleted([...listOfUncompleted, item]);
   }
 
   function deleteItem(id) {
-    const items = list.filter(item => item.id !== id);
-    setList(items);
+    const items = todos.filter(item => item.id !== id);
+    setTodos(items);
   }
 
   function deleteListItem(id) {
@@ -50,13 +51,14 @@ const ToDo = () => {
       if (item.id === id) {
         item.complete = !item.complete;
       }
-      if (item.complete === false) {
-        setListOfUncompleted([...listOfUncompleted, item])
+      if (item.complete === true) {
+        listOfUncompleted.filter(item => item.id !== id)
       }
       return item;
     });
     setTodos(items);
     setList(items);
+    setListOfUncompleted(items);
   }
   function toggleUncompletedList(id) {
     const items = listOfUncompleted.map(item => {
@@ -69,11 +71,15 @@ const ToDo = () => {
       return item;
     });
     setTodos(items);
-    setListOfUncompleted(items);
+    // setListOfUncompleted(items);
   }
 
   const handleShow = () => {
     setShowComplete(!showComplete)
+  }
+
+  const handlePage = (e) => {
+    setPostsPerPage(parseInt(e.target.value))
   }
 
   useEffect(() => {
@@ -127,11 +133,11 @@ const ToDo = () => {
     document.title = `To Do List: ${incomplete}`;
   }, [todos, incomplete]);
 
-  useEffect(() => {
-    if (todos.complete === false) {
-      setListOfUncompleted([...listOfUncompleted, todos.complete]);
-    }
-  }, [todos, listOfUncompleted]);
+  // useEffect(() => {
+  //   if (todos.complete === false) {
+  //     setListOfUncompleted([...listOfUncompleted, todos.complete]);
+  //   }
+  // }, [todos, listOfUncompleted]);
 
   return (
     <>
@@ -149,31 +155,30 @@ const ToDo = () => {
 
             <label>
               <span>To Do Item</span>
-              <input data-testid='input' onChange={handleChange} name="text" type="text" placeholder="Item Details" />
+              <input data-testid='input' className='form-input' onChange={handleChange} name="text" type="text" placeholder="Item Details" />
             </label>
 
             <label>
               <span>Assigned To</span>
-              <input onChange={handleChange} name="assignee" type="text" placeholder="Assignee Name" />
+              <input onChange={handleChange} className='form-input' name="assignee" type="text" placeholder="Assignee Name" />
             </label>
 
             <label>
               <span>Difficulty</span>
-              <input onChange={handleChange} defaultValue={defaultValues.difficulty} type="range" min={1} max={5} name="difficulty" />
+              <input onChange={handleChange} className='form-input' defaultValue={defaultValues.difficulty} type="range" min={1} max={5} name="difficulty" />
             </label>
 
+            <input type="number" className='per-page' name="postsPerPage" placeholder='Number of posts per page' onChange={handlePage} />
             <label>
               <button data-testid='button' type="submit">Add Item</button>
             </label>
-
-            <input type="number" className='per-page' name="postsPerPage" placeholder='Number of posts per page' onChange={(e) => { setPostsPerPage(parseInt(e.target.value)) }} />
           </form>
           <button className='show' onClick={handleShow}>{showComplete ? 'Hide Completed Items' : 'Show Completed Items'}</button>
           {
             showComplete ?
-              currentPosts.map((item, index) => {
+              currentPosts.map((item) => {
                 return (
-                  <div className='list-continuer' key={index}>
+                  <div className='list-continuer'>
                     <div key={item.id} className='items'>
                       <div className='btn-list'>
                         <button onClick={() => deleteItem(item.id)}>x</button>
@@ -202,30 +207,34 @@ const ToDo = () => {
                   </div>
                 )
               })
-              : currentUncompletedPosts.map((item, index) => {
+              : currentUncompletedPosts.map((item) => {
                 return (
-                  <div className='list-continuer' key={index}>
-                    <div key={item.id} className='items'>
-                      <div className='btn-list'>
-                        <button onClick={() => deleteListItem(item.id)}>x</button>
-                      </div>
-                      <p className='p-text'>
-                        {item.text}
-                      </p>
-                      <div className='p-holder'>
-                        <span className='p-assigned'><small>Assigned to: {item.assignee}</small></span>
-                        <span className='p-difficulty'><small>Difficulty: {item.difficulty}</small></span>
-                      </div>
-                      <div className='checkbox'>
-                        {
-                          !item.complete ? <div>
-                            <input type="checkbox" name='Incomplete' onClick={() => toggleUncompletedList(item.id)} />
-                            <label htmlFor="Incomplete">Complete</label>
-                          </div> : null
-                        }
-                      </div>
-                      <hr />
-                    </div>
+                  <div>
+                    {
+                      !item.complete ?
+                        <div className='list-continuer'>
+                          <div key={item.id} className='items'>
+                            <div className='btn-list'>
+                              <button onClick={() => deleteListItem(item.id)}>x</button>
+                            </div>
+                            <p className='p-text'>
+                              {item.text}
+                            </p>
+                            <div className='p-holder'>
+                              <span className='p-assigned'><small>Assigned to: {item.assignee}</small></span>
+                              <span className='p-difficulty'><small>Difficulty: {item.difficulty}</small></span>
+                            </div>
+                            <div className='checkbox'>
+                              <div>
+                                <input type="checkbox" name='Incomplete' onClick={() => toggleUncompletedList(item.id)} />
+                                <label htmlFor="Incomplete">Complete</label>
+                              </div>
+                            </div>
+                            <hr />
+                          </div>
+                        </div>
+                        : null
+                    }
                   </div>
                 )
               })
